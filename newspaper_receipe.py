@@ -24,7 +24,7 @@ def main(filename):
 def _read_data(filename):
     logger.info('Reading file {}'.format(filename))
 
-    return pd.read_csv(filename)
+    return pd.read_csv(filename, encoding='ISO-8859-1')
 
 
 def _extract_newspaper_uid(filename):
