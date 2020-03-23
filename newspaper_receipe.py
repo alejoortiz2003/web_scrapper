@@ -1,8 +1,15 @@
 import argparse
 import hashlib
 import logging
+import nltk
+
+nltk.download('punkt')
+nltk.download('stopwords')
+
+
 logging.basicConfig(level=logging.INFO)
 from urllib.parse import urlparse
+from nltk.corpus import stopwords
 
 
 import pandas as pd
@@ -21,6 +28,8 @@ def main(filename):
     df = _fill_missing_titles(df)
     df = _generate_uids_for_rows(df)
     df = _remove_new_lines_from_body(df)
+    df = _tokenize_column(df, 'title')
+    df = _tokenize_column(df, 'body')
 
     return df
 
@@ -90,6 +99,23 @@ def _remove_new_lines_from_body(df):
     df['body'] = stripped_body
 
     return df
+
+def _tokenize_column(df, column_name):
+    logger.info('Getting len of body and title')
+    stop_words = set(stopwords.words('spanish'))
+    token_cte = (df.dropna()
+            .apply(lambda row: nltk.word_tokenize(row[column_name]), axis=1)
+            .apply(lambda tokens: list(filter(lambda token: token.isalpha(), tokens)))
+            .apply(lambda tokens: list(map(lambda token: token.lower(),tokens)))
+            .apply(lambda word_list: list(filter(lambda word: word not in stop_words, word_list)))
+            .apply(lambda valid_word_list: len(valid_word_list))
+            )
+
+    column = 'n-tokens_{}'.format(column_name)
+    df[column] = token_cte
+
+    return df
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
